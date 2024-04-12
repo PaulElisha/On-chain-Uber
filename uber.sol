@@ -9,6 +9,7 @@
         address payable clientAddress;
         uint256 tripID;
         uint256 fare;
+        string destination;
         bool started;
         uint timestamp;
         bool done;
@@ -56,6 +57,7 @@
     error Payment_Unsuccessful();
     error Zero_Value_Check();
     error Insufficient_RideFare();
+    error Trip_Done();
    
 
 // setting up profiles
@@ -102,14 +104,15 @@
    //      return(DriverAvailability.availability = true);
    //   }
 
-    function BookTrip() external payable returns (uint tripId){
-      if(msg.value < 0) revert Zero_Value_Check();
+    function BookTrip(uint256 fare, string memory dest) external returns (uint tripId){
+      if(fare < 0) revert Zero_Value_Check();
 
       TripDetails storage currentTrip = tripMaps[totalTrips];
 
       currentTrip.clientAddress = payable(msg.sender);
       currentTrip.tripID = totalTrips;
-      currentTrip.fare = msg.value;
+      currentTrip.fare = fare;
+      currentTrip.destination = dest;
       currentTrip.timestamp = block.timestamp;
       currentTrip.started = true;
       currentTrip.done = false;
@@ -120,21 +123,22 @@
       emit TripBooked(msg.sender, currentTrip.timestamp, tripId, currentTrip.fare, currentTrip.started, currentTrip.done);
     }
 
-    function PayForCompletedTrip(uint256 _tripID) external payable{
-      if(msg.value < 0.000002 ether) revert Insufficient_RideFare();
+    function PayForCompletedTrip(uint256 _tripID, address _driverAddress) external payable{
+      TripDetails storage currentTrip = tripMaps[_tripID];
+
+      if(currentTrip.done) revert Trip_Done();
+      if(msg.value < currentTrip.fare) revert Insufficient_RideFare();
       
-      TripDetails storage destinationReached = tripMaps[_tripID];
+      currentTrip.done = true;
+      currentTrip.timestamp = block.timestamp;
 
-      destinationReached.done = false;
-      destinationReached.timestamp = block.timestamp;
-
-      (bool sent, ) = destinationReached.driverAddress.call{value: msg.value}("");
+      (bool sent, ) = driverMaps[_driverAddress].driverAddress.call{value: msg.value}("");
       if(!sent) revert Payment_Unsuccessful();
 
       Client storage hiredCar = clientMaps[msg.sender];
       hiredCar.clientTripIDs.push(_tripID);
 
-      emit TripCompleted(msg.sender, msg.value, destinationReached.done, destinationReached.timestamp);
+      emit TripCompleted(msg.sender, msg.value, currentTrip.done, currentTrip.timestamp);
 
     }
 
