@@ -5,7 +5,6 @@
   contract OnChainUber{
     
     struct TripDetails{
-        address payable driverAddress;
         address payable clientAddress;
         uint256 tripID;
         uint256 fare;
