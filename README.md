@@ -38,5 +38,5 @@ If you detect security issues or how to make the contract better, be generous to
 
 For those who don't know. I am a technical writer and Solidity developer. I am currently Managing the brilliant Web3 technical content creation team at [Blockchian Alpha](www.blockchainalpha.com).
 
-You can connect with me on (Twitter)[https://twitter.com/jofawole].
+You can connect with me on [Twitter](https://twitter.com/jofawole).
 
